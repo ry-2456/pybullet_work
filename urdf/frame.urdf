@@ -1,0 +1,66 @@
+<robot name="coord">
+  <link name="link1" />
+
+  <!-- x axis -->
+  <link name="link2">
+    <visual>
+      <geometry>
+        <cylinder length="0.3" radius="0.01" />
+      </geometry>
+      <!-- <origin xyz="0.15 0 0" rpy="0 0 0" /> -->
+      <origin xyz="0.15 0 0" rpy="0 1.57 0" />
+      <material name="red">
+        <color rgba="1.0 0.0 0.0 2.0" />
+      </material>
+    </visual>
+  </link>
+
+  <!-- y axis -->
+  <link name="link3">
+    <visual>
+      <geometry>
+        <cylinder length="0.3" radius="0.01" />
+      </geometry>
+      <!-- <origin xyz="0 0.15 0" rpy="0 0 1.57" /> -->
+      <origin xyz="0 0.15 0" rpy="-1.57 0 0" />
+      <material name="green">
+        <color rgba="0.0 1.0 0.0 2.0" />
+      </material>
+    </visual>
+  </link>
+
+  <!-- z axis -->
+  <link name="link4">
+    <visual>
+      <geometry>
+        <cylinder length="0.3" radius="0.01" />
+      </geometry>
+      <!-- <origin xyz="0 0 0.15" rpy="0 -1.57 0" /> -->
+      <origin xyz="0 0 0.15" rpy="0 0 0" />
+      <material name="blue">
+        <color rgba="0.0 0.0 1.0 2.0" />
+      </material>
+    </visual>
+  </link>
+
+  <joint name="joint1" type="fixed">
+    <parent link="link1" />
+    <child link="link2" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- y axis -->
+  <joint name="joint2" type="fixed">
+    <parent link="link1" />
+    <child link="link3" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- z axis -->
+  <joint name="joint3" type="fixed">
+    <parent link="link1" />
+    <child link="link4" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+</robot>
