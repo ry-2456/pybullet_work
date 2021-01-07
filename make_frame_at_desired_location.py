@@ -21,14 +21,14 @@ planeId = p.loadURDF("plane.urdf")
 # load frame
 frame1_orn = p.getQuaternionFromEuler([0,0,0])
 frame1_pos = [1,1,1]
-frame1 = p.loadURDF("./urdf/frame.urdf",
+frame1 = p.loadURDF("./data/urdf/frame.urdf",
                       basePosition=frame1_pos,
                       baseOrientation=frame1_orn,
                       useFixedBase=1)
 
 frame2_orn = p.getQuaternionFromEuler([0,0,1.57])
 frame2_pos = [1,2,1]
-frame2 = p.loadURDF("./urdf/frame.urdf",
+frame2 = p.loadURDF("./data/urdf/frame.urdf",
                       basePosition=frame2_pos,
                       baseOrientation=frame2_orn,
                       useFixedBase=1)
