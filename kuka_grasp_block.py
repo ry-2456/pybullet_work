@@ -22,25 +22,53 @@ physicsClient = p.connect(p.GUI) #or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0,0,-10.)
 
+# load block
 block_pos = [-0.5, 0, 0]
 block_orn = p.getQuaternionFromEuler([0,0,0])
 # block_pos = [1., 0, 0.5]
 blockId = p.loadURDF("block.urdf", block_pos, block_orn)
 p.resetBasePositionAndOrientation(blockId, block_pos, block_orn)
 block_pos[2] = 0.5
+
+# load plane
 planeId = p.loadURDF("plane.urdf", useMaximalCoordinates=False)
+
+# load kuka
 (kukaId, ) = p.loadSDF("kuka_iiwa/kuka_with_gripper.sdf")
 # numJoints = p.getNumJoints(kukaId)
 numJoints = 7
-# p.resetBasePositionAndOrientation(kukaId, [0,0,0], [0,0,0,1])
-
-# for i in range(numJoints):
-#     p.resetJointState(kukaId, i, np.pi/4)
-
 kukaEndEffectorIndex = 6
 kukaGripperIndex = 7
 leftfing1Id, leftfing2Id = 8, 10
 rightfing1Id, rightfing2Id = 11, 13
+# p.resetBasePositionAndOrientation(kukaId, [0,0,0], [0,0,0,1])
+
+# for i in range(numJoints):
+#     p.resetJointState(kukaId, i, np.pi/4)
+def print_friction_coefficient(objectId, linkIndex):
+    # print lateral, rolling and spinning coefficient
+    dynamics_info = p.getDynamicsInfo(objectId, linkIndex)
+    lateral_friction_coeff = dynamics_info[1]
+    rolling_friction_coeff = dynamics_info[6]
+    spinning_friction_coeff = dynamics_info[7]
+
+    print("lateral_friction_coeff:", lateral_friction_coeff)
+    print("rolling_friction_coeff:", rolling_friction_coeff)
+    print("spinning_friction_coeff:", spinning_friction_coeff)
+
+# change friction coefficient
+print("* block")
+print_friction_coefficient(blockId, -1)
+p.changeDynamics(blockId, -1, lateralFriction=3, spinningFriction=3)
+
+print("* kuka left fing")
+print_friction_coefficient(kukaId, leftfing2Id)
+p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3, spinningFriction=3)
+
+print("* kuka right fing")
+print_friction_coefficient(kukaId, rightfing2Id)
+p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3, spinningFriction=3)
+
 
 print(p.getJointInfo(kukaId, 6))
 print(p.getJointInfo(kukaId, 7))
@@ -135,12 +163,6 @@ p.setRealTimeSimulation(useRealTimeSimulation)
 # while p.isConnected(physicsClient):
 #     # p.stepSimulation()
 #     pass
-print("###################")
-print("friction coefficient: ", p.getDynamicsInfo(kukaId,leftfing2Id)[1])
-p.changeDynamics(kukaId, leftfing2Id, lateralFriction=1.5)
-p.changeDynamics(kukaId, rightfing2Id, lateralFriction=1.5)
-print("friction coefficient: ", p.getDynamicsInfo(kukaId,leftfing2Id)[1])
-print("###################")
 def test_ik():
 
     # kukaEndEffectorIndexからleftfing2Id(左の手先)までのz軸方の距離を求める
