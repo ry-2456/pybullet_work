@@ -1,7 +1,7 @@
+<?xml version='1.0' ?>
 <!-- pybulletで使うときはballをsphericalをする-->
 <!-- https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=12687 -->
 <!--  link同士の最短距離は0 -->
-<?xml version='1.0' ?>
 <sdf version="1.6">
   <model name="string_object">
 
