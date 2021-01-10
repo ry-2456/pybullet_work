@@ -7,6 +7,10 @@
 # inverse_kinematics.py
 # pybullet_robots/baxter_ik_demo.py
 
+# 参照した情報
+# Applying force to grasp an object so that the object does not slip through the gripper #1936
+# https://github.com/bulletphysics/bullet3/issues/1936
+
 from datetime import datetime
 import pybullet as p
 import struct
@@ -57,17 +61,47 @@ def print_friction_coefficient(objectId, linkIndex):
     print("spinning_friction_coeff:", spinning_friction_coeff)
 
 # change friction coefficient
+# print("* block")
+# print_friction_coefficient(blockId, -1)
+# p.changeDynamics(blockId, -1, lateralFriction=3)
+# print("* kuka left fing")
+# print_friction_coefficient(kukaId, leftfing2Id)
+# p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3)
+# print("* kuka right fing")
+# print_friction_coefficient(kukaId, rightfing2Id)
+# p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3)
+
+# lateralFrictionを大きくし、frictionAnchorを有効にするとグリップからものが滑りにくくなる
+# frictionAnchorが何なのかはわからない
 print("* block")
+p.changeDynamics(blockId, -1, lateralFriction=3, frictionAnchor=1)
 print_friction_coefficient(blockId, -1)
-p.changeDynamics(blockId, -1, lateralFriction=3, spinningFriction=3)
-
 print("* kuka left fing")
+p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3, frictionAnchor=1)
 print_friction_coefficient(kukaId, leftfing2Id)
-p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3, spinningFriction=3)
-
 print("* kuka right fing")
+p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3, frictionAnchor=1)
 print_friction_coefficient(kukaId, rightfing2Id)
-p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3, spinningFriction=3)
+
+# print("* block")
+# p.changeDynamics(blockId, -1, frictionAnchor=1)
+# print_friction_coefficient(blockId, -1)
+# print("* kuka left fing")
+# p.changeDynamics(kukaId, leftfing2Id, frictionAnchor=1)
+# print_friction_coefficient(kukaId, leftfing2Id)
+# print("* kuka right fing")
+# p.changeDynamics(kukaId, rightfing2Id, frictionAnchor=1)
+# print_friction_coefficient(kukaId, rightfing2Id)
+
+# print("* block")
+# p.changeDynamics(blockId, -1, lateralFriction=3, spinningFriction=3, frictionAnchor=1)
+# print_friction_coefficient(blockId, -1)
+# print("* kuka left fing")
+# p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3, spinningFriction=3, frictionAnchor=1)
+# print_friction_coefficient(kukaId, leftfing2Id)
+# print("* kuka right fing")
+# p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3, spinningFriction=3, frictionAnchor=1)
+# print_friction_coefficient(kukaId, rightfing2Id)
 
 
 print(p.getJointInfo(kukaId, 6))
