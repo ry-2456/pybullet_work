@@ -1,0 +1,4 @@
+origin	https://github.com/matafela/pybullet_grasp_annotator_robotiq_85.git (fetch)
+origin	https://github.com/matafela/pybullet_grasp_annotator_robotiq_85.git (push)
+origin	https://github.com/Alchemist77/pybullet-ur5-equipped-with-robotiq-140.git (fetch)
+origin	https://github.com/Alchemist77/pybullet-ur5-equipped-with-robotiq-140.git (push)
