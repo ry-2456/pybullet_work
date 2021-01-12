@@ -21,9 +21,9 @@ if __name__ == "__main__":
 
     string_pos = [0.0, 0.5, 0.5]
     string_orn = p.getQuaternionFromEuler([0, 0, 0])
-    string_model_path = "./data/urdf/string_like_object_3.sdf"
+    string_model_path = "./data/string_like_object_3.sdf"
     (stringId, ) = p.loadSDF(string_model_path)
-    # string_model_path = "./data/urdf/string_like_object.urdf"
+    # string_model_path = "./data/string_like_object.urdf"
     # stringId = p.loadURDF(string_model_path)# , useFixedBase=1)
     p.resetBasePositionAndOrientation(stringId, string_pos, string_orn)
 
