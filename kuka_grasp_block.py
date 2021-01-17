@@ -55,83 +55,25 @@ def print_friction_coefficient(objectId, linkIndex):
     lateral_friction_coeff = dynamics_info[1]
     rolling_friction_coeff = dynamics_info[6]
     spinning_friction_coeff = dynamics_info[7]
-
     print("lateral_friction_coeff:", lateral_friction_coeff)
     print("rolling_friction_coeff:", rolling_friction_coeff)
     print("spinning_friction_coeff:", spinning_friction_coeff)
 
-# change friction coefficient
-# print("* block")
-# print_friction_coefficient(blockId, -1)
-# p.changeDynamics(blockId, -1, lateralFriction=3)
-# print("* kuka left fing")
-# print_friction_coefficient(kukaId, leftfing2Id)
-# p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3)
-# print("* kuka right fing")
-# print_friction_coefficient(kukaId, rightfing2Id)
-# p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3)
-
 # lateralFrictionを大きくし、frictionAnchorを有効にするとグリップからものが滑りにくくなる
 # frictionAnchorが何なのかはわからない
-print("* block")
 p.changeDynamics(blockId, -1, lateralFriction=3, frictionAnchor=1)
-print_friction_coefficient(blockId, -1)
-print("* kuka left fing")
 p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3, frictionAnchor=1)
-print_friction_coefficient(kukaId, leftfing2Id)
-print("* kuka right fing")
 p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3, frictionAnchor=1)
-print_friction_coefficient(kukaId, rightfing2Id)
 
-# print("* block")
-# p.changeDynamics(blockId, -1, frictionAnchor=1)
-# print_friction_coefficient(blockId, -1)
-# print("* kuka left fing")
-# p.changeDynamics(kukaId, leftfing2Id, frictionAnchor=1)
-# print_friction_coefficient(kukaId, leftfing2Id)
-# print("* kuka right fing")
-# p.changeDynamics(kukaId, rightfing2Id, frictionAnchor=1)
-# print_friction_coefficient(kukaId, rightfing2Id)
-
-# print("* block")
-# p.changeDynamics(blockId, -1, lateralFriction=3, spinningFriction=3, frictionAnchor=1)
-# print_friction_coefficient(blockId, -1)
-# print("* kuka left fing")
-# p.changeDynamics(kukaId, leftfing2Id, lateralFriction=3, spinningFriction=3, frictionAnchor=1)
-# print_friction_coefficient(kukaId, leftfing2Id)
-# print("* kuka right fing")
-# p.changeDynamics(kukaId, rightfing2Id, lateralFriction=3, spinningFriction=3, frictionAnchor=1)
-# print_friction_coefficient(kukaId, rightfing2Id)
-
-
-print(p.getJointInfo(kukaId, 6))
-print(p.getJointInfo(kukaId, 7))
-print(p.getJointInfo(kukaId, leftfing1Id)[:2])
-print(p.getJointInfo(kukaId, leftfing2Id)[:2])
-print(p.getJointInfo(kukaId, rightfing1Id)[:2])
-print(p.getJointInfo(kukaId, rightfing2Id)[:2])
-# p.resetJointState(kukaId, 13, np.pi/2)
-# 8 11
-
-# collisionFilterGroup = 0
-# collisionFilterMask = 0
-enableCollision = 1
-p.setCollisionFilterPair(
-            bodyUniqueIdA=planeId, 
-            bodyUniqueIdB=blockId, 
-            linkIndexA=-1, 
-            linkIndexB=-1, 
-            enableCollision=1) # set 1 to enable, set 0 to disable
+# p.setCollisionFilterPair(
+#             bodyUniqueIdA=planeId, 
+#             bodyUniqueIdB=blockId, 
+#             linkIndexA=-1, 
+#             linkIndexB=-1, 
+#             enableCollision=1) # set 1 to enable, set 0 to disable
 
 objectNum = p.getNumBodies()
 
-
-# for i in range(numJoints):
-# for i in [leftfing1Id, leftfing2Id, rightfing1Id, rightfing2Id]:
-# for i in [rightfing1Id, rightfing2Id]:
-# for i in [9, 12]:
-# for i in [leftfing1Id, leftfing2Id]:
-# for i in [kukaEndEffectorIndex, kukaGripperIndex, leftfing1Id, leftfing2Id, rightfing1Id, rightfing2Id, 9, 12]:
 for i in range(p.getNumJoints(kukaId)):
     show_coords(kukaId, parentLinkIndex=i, frameLength=0.08)
     p.addUserDebugText("link:{}".format(i), 
