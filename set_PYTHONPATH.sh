@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # set PYTHONPATH for pybullet
 # Note that bullet3 and pybullet_work must be in the same directory.
 
