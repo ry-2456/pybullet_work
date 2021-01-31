@@ -77,9 +77,6 @@ for i in range(len(rp)):
     p.resetJointState(kukaId, i, rp[i])
 
 t = 0.
-# prevPose = [0, 0, 0]
-# prevPose1 = [0, 0, 0]
-# hasPrevPose = 0
 useNullSpace = 1
 
 useOrientation = 1
@@ -90,9 +87,6 @@ useRealTimeSimulation = 1
 ikSolver = 0
 p.setRealTimeSimulation(useRealTimeSimulation)
 
-# while p.isConnected(physicsClient):
-#     # p.stepSimulation()
-#     pass
 def grasp():
     leftfing1Id, leftfing2Id = 8, 10
     rightfing1Id, rightfing2Id = 11, 13
@@ -135,18 +129,7 @@ def test_ik():
     x_diff = endEffector_pos[4][0] - leftTip_pos[4][0]
     y_diff = endEffector_pos[4][1] - leftTip_pos[4][1]
     z_diff = endEffector_pos[4][2] - leftTip_pos[4][2]
-    # print("x_diff :", x_diff)
-    # print("y_diff :", y_diff)
-    # print("z_diff :", z_diff)
-    # print("#####################")
-    # print(endEffector_pos)
-    # print(endEffector_pos[4][0])
-    # print(endEffector_pos[2])
-    # print(leftTip_pos[4][0])
-    # print(leftTip_pos[2])
-    # print("#####################")
 
-    # orn = p.getQuaternionFromEuler([0, -math.pi, 0])
     orn = p.getQuaternionFromEuler([0, -math.pi, math.pi/2.])
     pos = block_pos[:2] + [0] # zは0
     pos[2] += z_diff+0.080 # 手先
@@ -156,19 +139,8 @@ def test_ik():
     targetPosZId = p.addUserDebugParameter("targetPosZ", -1, 1, pos[2])
 
     # for gripper 
-    lf1_init = 0
-    lf2_init = 0
-    rf1_init = 0
-    rf2_init = 0
     eef_init = 0
     eef_rot_id = p.addUserDebugParameter("eef", -3.14, 3.14, eef_init)
-    lf1_rot_id = p.addUserDebugParameter("lf1", -3.14, 3.14, lf1_init)
-    lf2_rot_id = p.addUserDebugParameter("lf2", -3.14, 3.14, lf2_init)
-    rf1_rot_id = p.addUserDebugParameter("rf1", -3.14, 3.14, rf1_init)
-    rf2_rot_id = p.addUserDebugParameter("rf2", -3.14, 3.14, rf2_init)
-
-    # targetAngleGraspId = p.addUserDebugParameter("targetAngleGrasp", -1, 1, pos[2])
-    # targetAngleTipId = p.addUserDebugParameter("targetAngleTip", -1, 1, pos[2])
 
     cnt = 1
     while True:
@@ -180,10 +152,6 @@ def test_ik():
         # targetAngleTip = p.readUserDebugParameter(targetAngleTipId)
 
         eef_rot = p.readUserDebugParameter(eef_rot_id)
-        lf1_rot = p.readUserDebugParameter(lf1_rot_id)
-        lf2_rot = p.readUserDebugParameter(lf2_rot_id)
-        rf1_rot = p.readUserDebugParameter(rf1_rot_id)
-        rf2_rot = p.readUserDebugParameter(rf2_rot_id)
 
         pos = [targetPosX, targetPosY, targetPosZ]
         jointPoses = p.calculateInverseKinematics(kukaId,
@@ -196,7 +164,6 @@ def test_ik():
                                                   restPoses=rp)
 
         numJoints = p.getNumJoints(kukaId)
-        # print("numJoints: ", numJoints)
 
         keys = p.getKeyboardEvents()
         ENTER = 65309
@@ -209,80 +176,6 @@ def test_ik():
                 grasp()
                 is_grasping = True
 
-        # skiped_num = 0
-        # for i in range(numJoints):
-        #     jointInfo = p.getJointInfo(kukaId, i)
-        #     qIndex = jointInfo[3]
-        #     if qIndex == -1:
-        #         skiped_num += 1
-        #         continue
-        #     # if qIndex > -1:
-        #     jointPoses = list(jointPoses) # tuple to list
-        #     # 手首
-        #     if i == kukaEndEffectorIndex:
-        #         jointPoses[i-skiped_num] = eef_rot
-        #     elif i == leftfing1Id:
-        #         # jointPoses[i-skiped_num] = -math.pi/(32+cnt)
-        #         # jointPoses[i-skiped_num] = math.pi/64 - math.pi/cnt
-        #         # jointPoses[i-skiped_num] = math.pi/64# - math.pi/cnt
-        #         jointPoses[i-skiped_num] = lf1_rot
-        #         # jointPoses[i-skiped_num] = 0
-        #         # jointPoses[i-skiped_num] = 0
-        #     elif i == rightfing1Id:
-        #         #jointPoses[i-skiped_num] = math.pi/(32+cnt)
-        #         # jointPoses[i-skiped_num] = -math.pi/64 + math.pi/cnt
-        #         jointPoses[i-skiped_num] = rf1_rot
-        #         # jointPoses[i-skiped_num] = 0
-        #     # 手先
-        #     elif i == leftfing2Id:
-        #         # jointPoses[i-skiped_num] = -math.pi/16
-        #         jointPoses[i-skiped_num] = lf2_rot
-        #         # jointPoses[i-skiped_num] = 0
-        #     elif i == rightfing2Id:
-        #         # jointPoses[i-skiped_num] = math.pi/16
-        #         jointPoses[i-skiped_num] = rf2_rot
-        #         # jointPoses[i-skiped_num] = 0
-        #         
-        #     # p.setJointMotorControl2(bodyIndex=kukaId,
-        #     #                         jointIndex=i,
-        #     #                         controlMode=p.POSITION_CONTROL,
-        #     #                         targetPosition=jointPoses[i-skiped_num],
-        #     #                         targetVelocity=0,
-        #     #                         force=500,
-        #     #                         positionGain=0.03,
-        #     #                         velocityGain=1)
 
-        #     p.setJointMotorControlArray(bodyIndex=kukaId,
-        #                                 jointIndices=[i],
-        #                                 controlMode=p.POSITION_CONTROL,
-        #                                 targetPositions=[jointPoses[i-skiped_num]],
-        #                                 targetVelocities=[0],
-        #                                 forces=[500],
-        #                                 positionGains=[0.03],
-        #                                 velocityGains=[1])
-
-        # # p.setJointMotorControlArray(bodyIndex=kukaId,
-        # #                             jointIndices=[],
-        # #                             controlMode=p.POSITION_CONTROL,
-        # #                             targetPositions=[],
-        # #                             targetVelocity=[],
-        # #                             forces=[],
-        # #                             positionGains=[],
-        # #                             velocityGains=[],
-        # #                             physicsClient=[])
-
-
-        # # for i in range(numJoints):
-        # #   p.setJointMotorControl2(bodyIndex=kukaId,
-        # #                           jointIndex=i,
-        # #                           controlMode=p.POSITION_CONTROL,
-        # #                           targetPosition=jointPoses[i],
-        # #                           targetVelocity=0,
-        # #                           force=500,
-        # #                           positionGain=0.03,
-        # #                           velocityGain=1)
-        # # print(jointPoses)
-        cnt += 1
-test_ik()
-
-sys.exit(0)
+if __name__ == "__main__":
+    test_ik()
