@@ -119,10 +119,7 @@ def release():
                                 positionGains=[0.03, 0.03],
                                 velocityGains=[1, 1])
 
-is_grasping = True
-
-def test_ik():
-
+def move_eff(pos, orn):
     # kukaEndEffectorIndexからleftfing2Id(左の手先)までのz軸方の距離を求める
     endEffector_pos = p.getLinkState(kukaId, kukaEndEffectorIndex)
     leftTip_pos = p.getLinkState(kukaId, leftfing2Id)
@@ -134,9 +131,42 @@ def test_ik():
     pos = block_pos[:2] + [0] # zは0
     pos[2] += z_diff+0.080 # 手先
 
-    targetPosXId = p.addUserDebugParameter("targetPosX", -1, 1, pos[0])
-    targetPosYId = p.addUserDebugParameter("targetPosY", -1, 1, pos[1])
-    targetPosZId = p.addUserDebugParameter("targetPosZ", -1, 1, pos[2])
+    jointPoses = p.calculateInverseKinematics(kukaId,
+                                              kukaEndEffectorIndex,
+                                              pos,
+                                              orn,
+                                              lowerLimits=ll,
+                                              upperLimits=ul,
+                                              jointRanges=jr,
+                                              restPoses=rp)
+
+    # move eef
+    for i in range(numJoints):
+        jointInfo = p.getJointInfo(kukaId, i)
+        qIndex = jointInfo[3]
+        if qIndex == -1:
+            skiped_num += 1
+            continue
+        jointPoses = list(jointPoses)
+        p.setJointMotorControl2(bodyIndex=kukaId,
+                                jointIndex=i,
+                                controlMode=p.POSITION_CONTROL,
+                                targetPosition=jointPoses[i-skiped_num],
+                                targetVelocity=0,
+                                force=500,
+                                positionGain=0.03,
+                                velocityGain=1)
+
+
+if __name__ == "__main__":
+    is_grasping = True
+
+    eef_x_id = p.addUserDebugParameter("eef_x", -1, 1, pos[0])
+    eef_y_id = p.addUserDebugParameter("eef_y", -1, 1, pos[1])
+    eef_z_id = p.addUserDebugParameter("eef_z", -1, 1, pos[2])
+    eef_roll_id  = p.addUserDebugParameter("eef_roll", -1, 1, pos[0])
+    eef_pitch_id = p.addUserDebugParameter("eef_pitch", -1, 1, pos[1])
+    eef_yaw_id   = p.addUserDebugParameter("eef_yaw", -1, 1, pos[2])
 
     # for gripper 
     eef_init = 0
@@ -145,23 +175,18 @@ def test_ik():
     cnt = 1
     while True:
 
-        targetPosX = p.readUserDebugParameter(targetPosXId)
-        targetPosY = p.readUserDebugParameter(targetPosYId)
-        targetPosZ = p.readUserDebugParameter(targetPosZId)
+        eef_x = p.readUserDebugParameter(eef_x_id)
+        eef_y = p.readUserDebugParameter(eef_y_id)
+        eef_z = p.readUserDebugParameter(eef_z_id)
+        eef_roll  = p.readUserDebugParameter(eef_roll_id)
+        eef_pitch = p.readUserDebugParameter(eef_pitch_id)
+        eef_yaw   = p.readUserDebugParameter(eef_yaw_id)
         # targetAngleGrasp = p.readUserDebugParameter(targetAngleGraspId)
         # targetAngleTip = p.readUserDebugParameter(targetAngleTipId)
 
         eef_rot = p.readUserDebugParameter(eef_rot_id)
 
-        pos = [targetPosX, targetPosY, targetPosZ]
-        jointPoses = p.calculateInverseKinematics(kukaId,
-                                                  kukaEndEffectorIndex,
-                                                  pos,
-                                                  orn,
-                                                  lowerLimits=ll,
-                                                  upperLimits=ul,
-                                                  jointRanges=jr,
-                                                  restPoses=rp)
+        # pos = [targetPosX, targetPosY, targetPosZ]
 
         numJoints = p.getNumJoints(kukaId)
 
@@ -175,7 +200,3 @@ def test_ik():
             else:
                 grasp()
                 is_grasping = True
-
-
-if __name__ == "__main__":
-    test_ik()
