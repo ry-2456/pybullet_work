@@ -88,6 +88,7 @@ ikSolver = 0
 p.setRealTimeSimulation(useRealTimeSimulation)
 
 def grasp():
+    # TODO: 指先の角度も指定
     leftfing1Id, leftfing2Id = 8, 10
     rightfing1Id, rightfing2Id = 11, 13
 
@@ -104,6 +105,7 @@ def grasp():
                                 velocityGains=[1, 1])
 
 def release():
+    # TODO: 指先の角度も指定
     leftfing1Id, leftfing2Id = 8, 10
     rightfing1Id, rightfing2Id = 11, 13
 
@@ -119,28 +121,54 @@ def release():
                                 positionGains=[0.03, 0.03],
                                 velocityGains=[1, 1])
 
-def move_eff(pos, orn):
+def move_eff(target_pos, target_orn):
     # kukaEndEffectorIndexからleftfing2Id(左の手先)までのz軸方の距離を求める
-    endEffector_pos = p.getLinkState(kukaId, kukaEndEffectorIndex)
-    leftTip_pos = p.getLinkState(kukaId, leftfing2Id)
-    x_diff = endEffector_pos[4][0] - leftTip_pos[4][0]
-    y_diff = endEffector_pos[4][1] - leftTip_pos[4][1]
-    z_diff = endEffector_pos[4][2] - leftTip_pos[4][2]
+    # TODO:
+    # 同時変換行列で計算しましょう
+    # エンドエフェクタのベースと手先のフレームの同時変換行列から計算できる
+    # 手先をある姿勢,位置にするにはエンドエフェクタのベースをどこに持っていけばいいか
+    # これを計算する
+    # getMatrixFromQuaternion
+    eef_base_pos, eef_base_orn = p.getLinkState(kukaId, kukaEndEffectorIndex)[4:6]
+    left_tip_pos, left_tip_orn = p.getLinkState(kukaId, leftfing2Id)[4:6]
+    right_tip_pos, right_tip_orn = p.getLinkState(kukaId, rightfing2Id)[4:6]
 
-    orn = p.getQuaternionFromEuler([0, -math.pi, math.pi/2.])
-    pos = block_pos[:2] + [0] # zは0
-    pos[2] += z_diff+0.080 # 手先
+    x_offset = (left_tip_pos[0] + right_tip_pos[0])/2.0 - eef_base_pos[0]
+    y_offset = (left_tip_pos[1] + right_tip_pos[1])/2.0 - eef_base_pos[1]
+    z_offset = (left_tip_pos[2] + right_tip_pos[2])/2.0 - eef_base_pos[2]
+    target_pos[0] -= x_offset
+    target_pos[1] -= y_offset
+    target_pos[2] -= z_offset-0.03 # TODO: もう少し調整が必要
+
+    # eef_base_to_tip = np.eye(4)
+    # eef_base_to_tip[:3,3] = [x_offset, y_offset, z_offset]
+    # world_to_eef_base = np.eye(4)
+    # world_to_eef_base[0:3,0:3] = np.array(p.getMatrixFromQuaternion(eef_base_orn)).reshape(3,3)
+    # world_to_eef_base[:3,3] = eef_base_pos
+
+    # x_diff = endEffector_pos[4][0] - leftTip_pos[4][0]
+    # y_diff = endEffector_pos[4][1] - leftTip_pos[4][1]
+    # z_diff = endEffector_pos[4][2] - leftTip_pos[4][2]
+    # orn = p.getQuaternionFromEuler([0, -math.pi, math.pi/2.])
+    # pos = block_pos[:2] + [0] # zは0
+    # pos[2] += z_diff+0.080 # 手先
+    
+    # yaw->pitch->rollの順番で回転
+    if len(target_orn) == 3:
+        target_orn= p.getQuaternionFromEuler(target_orn)
 
     jointPoses = p.calculateInverseKinematics(kukaId,
                                               kukaEndEffectorIndex,
-                                              pos,
-                                              orn,
+                                              target_pos,
+                                              target_orn,
                                               lowerLimits=ll,
                                               upperLimits=ul,
                                               jointRanges=jr,
                                               restPoses=rp)
 
     # move eef
+    numJoints = p.getNumJoints(kukaId)
+    skiped_num = 0
     for i in range(numJoints):
         jointInfo = p.getJointInfo(kukaId, i)
         qIndex = jointInfo[3]
@@ -148,6 +176,7 @@ def move_eff(pos, orn):
             skiped_num += 1
             continue
         jointPoses = list(jointPoses)
+        # TODO: setJointMotorControlArrayに変更する
         p.setJointMotorControl2(bodyIndex=kukaId,
                                 jointIndex=i,
                                 controlMode=p.POSITION_CONTROL,
@@ -161,12 +190,15 @@ def move_eff(pos, orn):
 if __name__ == "__main__":
     is_grasping = True
 
-    eef_x_id = p.addUserDebugParameter("eef_x", -1, 1, pos[0])
-    eef_y_id = p.addUserDebugParameter("eef_y", -1, 1, pos[1])
-    eef_z_id = p.addUserDebugParameter("eef_z", -1, 1, pos[2])
-    eef_roll_id  = p.addUserDebugParameter("eef_roll", -1, 1, pos[0])
-    eef_pitch_id = p.addUserDebugParameter("eef_pitch", -1, 1, pos[1])
-    eef_yaw_id   = p.addUserDebugParameter("eef_yaw", -1, 1, pos[2])
+    eef_pos, eef_orn = p.getLinkState(kukaId, kukaEndEffectorIndex)[4:6]
+    eef_orn = p.getEulerFromQuaternion(eef_orn)
+
+    eef_x_id = p.addUserDebugParameter("eef_x", -1, 2, eef_pos[0])
+    eef_y_id = p.addUserDebugParameter("eef_y", -1, 2, eef_pos[1])
+    eef_z_id = p.addUserDebugParameter("eef_z", -1, 2, eef_pos[2])
+    eef_roll_id  = p.addUserDebugParameter("eef_roll", -math.pi, math.pi, eef_orn[0])
+    eef_pitch_id = p.addUserDebugParameter("eef_pitch", -math.pi, math.pi, eef_orn[1])
+    eef_yaw_id   = p.addUserDebugParameter("eef_yaw", -math.pi, math.pi, eef_orn[2])
 
     # for gripper 
     eef_init = 0
@@ -174,7 +206,6 @@ if __name__ == "__main__":
 
     cnt = 1
     while True:
-
         eef_x = p.readUserDebugParameter(eef_x_id)
         eef_y = p.readUserDebugParameter(eef_y_id)
         eef_z = p.readUserDebugParameter(eef_z_id)
@@ -183,13 +214,13 @@ if __name__ == "__main__":
         eef_yaw   = p.readUserDebugParameter(eef_yaw_id)
         # targetAngleGrasp = p.readUserDebugParameter(targetAngleGraspId)
         # targetAngleTip = p.readUserDebugParameter(targetAngleTipId)
-
+        pos = [eef_x, eef_y, eef_z]
+        orn = [eef_roll, eef_pitch, eef_yaw]
+        move_eff(pos, orn)
+        
+        # FIXME: move_eefの処理をするとgraspとreleaseがうまく動かない
         eef_rot = p.readUserDebugParameter(eef_rot_id)
-
-        # pos = [targetPosX, targetPosY, targetPosZ]
-
         numJoints = p.getNumJoints(kukaId)
-
         keys = p.getKeyboardEvents()
         ENTER = 65309
         global is_grasping
