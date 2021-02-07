@@ -1,4 +1,4 @@
-# set PYTHONPATH for pybullet
+# set PYTHONPATH for pybullet and alias python->python3
 # Note that bullet3 and pybullet_work must be in the same directory.
 
 # reference
@@ -15,3 +15,5 @@ echo "set PYTHONPATH as follows"
 echo ${PYTHONPATH}
 yes = | head -n ${#PYTHONPATH} | tr -d '\n'
 echo
+
+alias python=python3
