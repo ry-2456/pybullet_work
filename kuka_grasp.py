@@ -148,7 +148,8 @@ def move_eff(target_pos, target_orn):
     z_offset = (left_tip_pos[2] + right_tip_pos[2])/2.0 - eef_base_pos[2]
     target_pos[0] -= x_offset
     target_pos[1] -= y_offset
-    target_pos[2] -= z_offset-0.03 # TODO: もう少し調整が必要
+    target_pos[2] -= z_offset-0.063 # TODO: もう少し調整が必要0.056
+                                    #       角度がついた時も考える
 
     # eef_base_to_tip = np.eye(4)
     # eef_base_to_tip[:3,3] = [x_offset, y_offset, z_offset]
@@ -187,7 +188,7 @@ def move_eff(target_pos, target_orn):
             continue
         jointPoses = list(jointPoses)
         # TODO: setJointMotorControlArrayに変更する
-        # グリッパーの関節角は変えない
+        # グリッパーの関節角は変えないt
         if i in [leftfing1Id, leftfing2Id, rightfing1Id, rightfing2Id]:
             continue
         p.setJointMotorControl2(bodyIndex=kukaId,
@@ -199,9 +200,9 @@ def move_eff(target_pos, target_orn):
                                 positionGain=0.03,
                                 velocityGain=1)
 
-
 if __name__ == "__main__":
     is_grasping = True
+    grasp()
 
     eef_pos, eef_orn = p.getLinkState(kukaId, kukaEndEffectorIndex)[4:6]
     eef_orn = p.getEulerFromQuaternion(eef_orn)
@@ -217,7 +218,6 @@ if __name__ == "__main__":
     eef_init = 0
     eef_rot_id = p.addUserDebugParameter("eef", -3.14, 3.14, eef_init)
 
-    cnt = 1
     while True:
         eef_x = p.readUserDebugParameter(eef_x_id)
         eef_y = p.readUserDebugParameter(eef_y_id)
@@ -235,6 +235,9 @@ if __name__ == "__main__":
         numJoints = p.getNumJoints(kukaId)
         keys = p.getKeyboardEvents()
         ENTER = 65309
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
         if ENTER in keys and keys[ENTER]&p.KEY_WAS_RELEASED:
             if is_grasping:
                 release()
@@ -242,3 +245,7 @@ if __name__ == "__main__":
             else:
                 grasp()
                 is_grasping = True
+
+        mouse_events = p.getMouseEvents()
+        if mouse_events:
+            print(mouse_events)
