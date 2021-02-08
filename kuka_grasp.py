@@ -88,38 +88,48 @@ ikSolver = 0
 p.setRealTimeSimulation(useRealTimeSimulation)
 
 def grasp():
-    # TODO: 指先の角度も指定
     leftfing1Id, leftfing2Id = 8, 10
     rightfing1Id, rightfing2Id = 11, 13
 
     grasp_lf1_rot = 0
     grasp_rf1_rot = 0
+    grasp_lf2_rot = 0
+    grasp_rf2_rot = 0
+
+    joint_indices = [leftfing1Id, rightfing1Id, leftfing2Id, rightfing2Id]
+    target_positions = [grasp_lf1_rot, grasp_rf1_rot, 
+                        grasp_lf2_rot, grasp_rf2_rot]
 
     p.setJointMotorControlArray(bodyIndex=kukaId,
-                                jointIndices=[leftfing1Id, rightfing1Id],
+                                jointIndices=joint_indices,
                                 controlMode=p.POSITION_CONTROL,
-                                targetPositions=[grasp_lf1_rot, grasp_rf1_rot],
-                                targetVelocities=[0, 0],
-                                forces=[500, 500],
-                                positionGains=[0.03, 0.03],
-                                velocityGains=[1, 1])
+                                targetPositions=target_positions,
+                                targetVelocities=[0]*4,
+                                forces=[500]*4,
+                                positionGains=[0.03]*4,
+                                velocityGains=[1]*4)
 
 def release():
-    # TODO: 指先の角度も指定
     leftfing1Id, leftfing2Id = 8, 10
     rightfing1Id, rightfing2Id = 11, 13
 
     release_lf1_rot = -0.165
-    release_rf1_rot = 0.165
+    release_rf1_rot = 0.165 
+    release_lf2_rot = 0
+    release_rf2_rot = 0
+
+    joint_indices = [leftfing1Id, rightfing1Id, leftfing2Id, rightfing2Id]
+    target_positions = [release_lf1_rot, release_rf1_rot, 
+                        release_lf2_rot, release_rf2_rot]
 
     p.setJointMotorControlArray(bodyIndex=kukaId,
-                                jointIndices=[leftfing1Id, rightfing1Id],
+                                jointIndices=joint_indices,
                                 controlMode=p.POSITION_CONTROL,
-                                targetPositions=[release_lf1_rot, release_rf1_rot],
-                                targetVelocities=[0, 0],
-                                forces=[500, 500],
-                                positionGains=[0.03, 0.03],
-                                velocityGains=[1, 1])
+                                targetPositions=target_positions,
+                                targetVelocities=[0]*4,
+                                forces=[500]*4,
+                                positionGains=[0.03]*4,
+                                velocityGains=[1]*4)
 
 def move_eff(target_pos, target_orn):
     # kukaEndEffectorIndexからleftfing2Id(左の手先)までのz軸方の距離を求める
