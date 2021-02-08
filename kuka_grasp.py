@@ -177,6 +177,9 @@ def move_eff(target_pos, target_orn):
             continue
         jointPoses = list(jointPoses)
         # TODO: setJointMotorControlArrayに変更する
+        # グリッパーの関節角は変えない
+        if i in [leftfing1Id, leftfing2Id, rightfing1Id, rightfing2Id]:
+            continue
         p.setJointMotorControl2(bodyIndex=kukaId,
                                 jointIndex=i,
                                 controlMode=p.POSITION_CONTROL,
@@ -218,7 +221,6 @@ if __name__ == "__main__":
         orn = [eef_roll, eef_pitch, eef_yaw]
         move_eff(pos, orn)
         
-        # FIXME: move_eefの処理をするとgraspとreleaseがうまく動かない
         eef_rot = p.readUserDebugParameter(eef_rot_id)
         numJoints = p.getNumJoints(kukaId)
         keys = p.getKeyboardEvents()
