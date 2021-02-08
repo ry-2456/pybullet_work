@@ -235,6 +235,9 @@ if __name__ == "__main__":
         numJoints = p.getNumJoints(kukaId)
         keys = p.getKeyboardEvents()
         ENTER = 65309
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
         if ENTER in keys and keys[ENTER]&p.KEY_WAS_RELEASED:
             if is_grasping:
                 release()
