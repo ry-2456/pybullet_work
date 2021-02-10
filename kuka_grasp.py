@@ -12,7 +12,7 @@
 # https://github.com/bulletphysics/bullet3/issues/1936
 # link_index == joint_index
 
-from datetime import datetime
+import cv2
 import pybullet as p
 import struct
 import pybullet_data
@@ -21,11 +21,19 @@ import math
 import sys
 import pprint
 
+from datetime import datetime
 from show_coords import show_coords
 
 physicsClient = p.connect(p.GUI) #or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0,0,-10.)
+
+# for camera
+width, height, fov = 240, 240, 60
+aspect = width / height
+near, far = 0.02, 4
+view_matrix = p.computeViewMatrix([-0.6, 0, 0.6], [-0.5, 0, 0], [1, 0, 0])
+projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
 
 # load block
 block_pos = [-0.5, 0, 0]
@@ -86,6 +94,101 @@ useSimulation = 1
 useRealTimeSimulation = 1
 ikSolver = 0
 p.setRealTimeSimulation(useRealTimeSimulation)
+
+def copy_img(dst, src):
+    """
+    p.getCameraImageで得た画像をcv2.circleに渡すとerrorが起きる
+
+    dst = np.array(src.shpae, src.dtype)
+    copy_img(dst, src)
+    cv2.circle(dst, ...)
+
+    としてdstをcv2.circleに渡すとerrorが起きなくなる
+    errorの原因は不明
+    """
+    img_h, img_w = src.shape[:2]
+    for i in range(img_h): 
+        for j in range(img_w):
+            dst[i,j] = src[i,j]
+
+def get_block_pos(blockId, images):
+    """
+    block.urdfの中心座標を返す np.array([float]*3)
+    """
+    color_image_org = np.reshape(images[2], (height, width, 4))
+    color_image_ = color_image_org[:,:,[2,1,0]] # convet RGBA to BGR
+    # color_image = color_image.astype(np.uint8) # convert int32 to uint8.
+    color_image = np.zeros(color_image_.shape, np.uint8) # color_image_にcv2.circleで書き込むを原因不明の
+    copy_img(color_image, color_image_) # エラーが起きるこのように左のようにすればエラー回避できる
+    depth_buffer = np.reshape(images[3], [height, width])
+    depth_image = near / (far - (far - near) * depth_buffer)
+    seg_opengl = np.reshape(images[4], [height, width])
+    # flags = (images[4] == blockId)
+    flags = (seg_opengl == blockId)
+    
+    aveu, avev, count = 0, 0, 0
+    for i in range(height):
+        for j in range(width):
+            # if flags[i][j] == True:
+                object_uid = seg_opengl[i,j] & ((1 << 24) - 1)
+                if object_uid == blockId:
+                    aveu += j
+                    avev += i
+                    count += 1
+
+    if count == 0:
+        return None
+
+    stepX = 1
+    stepY = 1
+    # pointCloud = np.empty([np.int(img_height/stepY), np.int(img_width/stepX), 4])
+    # pointCloud = np.empty([np.int(height/stepY), np.int(width/stepX), 4])
+    pointCloud = np.empty([int(height/stepY), int(width/stepX), 4])
+    projectionMatrix = np.asarray(projection_matrix).reshape([4,4],order='F')
+    viewMatrix = np.asarray(view_matrix).reshape([4,4],order='F')
+    tran_pix_world = np.linalg.inv(np.matmul(projectionMatrix, viewMatrix))
+    # for h in range(0, img_height, stepY):
+    #     for w in range(0, img_width, stepX):
+    for h in range(0, height, stepY):
+        for w in range(0, width, stepX):
+            x = (2*w - width)/width
+            y = -(2*h - height)/height  # be careful！ deepth and its corresponding position
+            # z = 2*depth_np_arr[h,w] - 1
+            z = 2*depth_buffer[h,w] - 1
+            pixPos = np.asarray([x, y, z, 1])
+            position = np.matmul(tran_pix_world, pixPos)
+
+            # pointCloud[np.int(h/stepY),np.int(w/stepX),:] = position / position[3]
+            pointCloud[int(h/stepY),int(w/stepX),:] = position / position[3]
+    
+    print(pointCloud[int(avev/count), int(aveu/count)])
+    print(block_pos)
+    # posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
+    # print(posmap[int(avev/count), int(aveu/count)])
+    
+
+
+    vm = np.array(view_matrix).reshape(4,4)
+    aveu = aveu/count - width/2
+    avev = avev/count - height/2
+    theta_x = (np.deg2rad(fov)*aveu)/(2*height)
+    theta_y = (np.deg2rad(fov)*avev)/(2*height)
+    z = -depth_buffer[int(avev)][int(aveu)]
+    x = -z*np.tan(theta_x)
+    y = -z*np.tan(theta_y)
+    x_camera = np.array((x, y, z, 1))
+    x_world = np.dot(np.linalg.inv(vm.T), x_camera)
+    
+    center = (int(aveu + width/2), int(avev + height/2))
+    cv2.circle(color_image, center, 3, (255, 255, 0), -1)
+    # cv2.circle(color_image, center, 3, (255, 255, 0), -1)
+    img = np.zeros(color_image.shape, np.uint8)
+    cv2.circle(img, (int(aveu + width/2), int(avev + height/2)), 3, (255, 255, 0), -1)
+    cv2.imshow("depth image", depth_image)
+    cv2.imshow("color image", color_image)
+    cv2.waitKey(10)
+
+    return x_world[:3]
 
 def grasp():
     leftfing1Id, leftfing2Id = 8, 10
@@ -235,9 +338,6 @@ if __name__ == "__main__":
         numJoints = p.getNumJoints(kukaId)
         keys = p.getKeyboardEvents()
         ENTER = 65309
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
         if ENTER in keys and keys[ENTER]&p.KEY_WAS_RELEASED:
             if is_grasping:
                 release()
@@ -249,3 +349,17 @@ if __name__ == "__main__":
         mouse_events = p.getMouseEvents()
         if mouse_events:
             print(mouse_events)
+
+        images = p.getCameraImage(width,
+                                  height,
+                                  view_matrix,
+                                  projection_matrix,
+                                  # shadow=True,
+                                  renderer=p.ER_BULLET_HARDWARE_OPENGL)
+        
+        b_pos = get_block_pos(blockId, images)
+        print(b_pos.shape)
+        # print("##########")
+        # print(b_pos)
+        # print(block_pos)
+        # print("##########")
