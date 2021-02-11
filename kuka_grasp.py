@@ -111,6 +111,22 @@ def copy_img(dst, src):
         for j in range(img_w):
             dst[i,j] = src[i,j]
 
+def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer):
+    posmap = np.empty([height, width, 4])
+    projectionMatrix = np.asarray(projection_matrix).reshape([4,4],order='F')
+    viewMatrix = np.asarray(view_matrix).reshape([4,4],order='F')
+    tran_pix_world = np.linalg.inv(np.matmul(projectionMatrix, viewMatrix))
+    for h in range(height):
+        for w in range(width):
+            x = (2.*w - width)/width
+            y = -(2.*h - height)/height  # be careful！ deepth and its corresponding position
+            z = 2.*depth_buffer[h,w] - 1
+            pixPos = np.asarray([x, y, z, 1])
+            position = np.matmul(tran_pix_world, pixPos)
+            posmap[h,w,:] = position / position[3]
+    
+    return posmap
+
 def get_block_pos(blockId, images):
     """
     block.urdfの中心座標を返す np.array([float]*3)
@@ -139,35 +155,10 @@ def get_block_pos(blockId, images):
     if count == 0:
         return None
 
-    stepX = 1
-    stepY = 1
-    # pointCloud = np.empty([np.int(img_height/stepY), np.int(img_width/stepX), 4])
-    # pointCloud = np.empty([np.int(height/stepY), np.int(width/stepX), 4])
-    pointCloud = np.empty([int(height/stepY), int(width/stepX), 4])
-    projectionMatrix = np.asarray(projection_matrix).reshape([4,4],order='F')
-    viewMatrix = np.asarray(view_matrix).reshape([4,4],order='F')
-    tran_pix_world = np.linalg.inv(np.matmul(projectionMatrix, viewMatrix))
-    # for h in range(0, img_height, stepY):
-    #     for w in range(0, img_width, stepX):
-    for h in range(0, height, stepY):
-        for w in range(0, width, stepX):
-            x = (2*w - width)/width
-            y = -(2*h - height)/height  # be careful！ deepth and its corresponding position
-            # z = 2*depth_np_arr[h,w] - 1
-            z = 2*depth_buffer[h,w] - 1
-            pixPos = np.asarray([x, y, z, 1])
-            position = np.matmul(tran_pix_world, pixPos)
-
-            # pointCloud[np.int(h/stepY),np.int(w/stepX),:] = position / position[3]
-            pointCloud[int(h/stepY),int(w/stepX),:] = position / position[3]
-    
-    print(pointCloud[int(avev/count), int(aveu/count)])
+    posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
+    print(posmap[int(avev/count), int(aveu/count)])
     print(block_pos)
-    # posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
-    # print(posmap[int(avev/count), int(aveu/count)])
-    
-
-
+  
     vm = np.array(view_matrix).reshape(4,4)
     aveu = aveu/count - width/2
     avev = avev/count - height/2
