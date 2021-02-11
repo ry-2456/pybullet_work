@@ -121,7 +121,7 @@ def object_mask_from_seg(obj_id, seg):
     seg : p.getCameraImage(...)の戻り値の4つめの値
     """
     mask = np.zeros(seg.shape, dtype=np.uint8)
-    mask[np.where(obj_id == seg&((1<<24)-1))] = 255
+    mask[obj_id == seg&((1<<24)-1)] = 255
     return mask
 
 def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer):
