@@ -360,36 +360,17 @@ if __name__ == "__main__":
 
     eef_pos, eef_orn = p.getLinkState(kukaId, kukaEndEffectorIndex)[4:6]
     eef_orn = p.getEulerFromQuaternion(eef_orn)
+    eef_pos = np.array(eef_pos)
+    eef_orn = np.array(eef_orn)
 
-    eef_x_id = p.addUserDebugParameter("eef_x", -1, 2, eef_pos[0])
-    eef_y_id = p.addUserDebugParameter("eef_y", -1, 2, eef_pos[1])
-    eef_z_id = p.addUserDebugParameter("eef_z", -1, 2, eef_pos[2])
-    eef_roll_id  = p.addUserDebugParameter("eef_roll", -math.pi, math.pi, eef_orn[0])
-    eef_pitch_id = p.addUserDebugParameter("eef_pitch", -math.pi, math.pi, eef_orn[1])
-    eef_yaw_id   = p.addUserDebugParameter("eef_yaw", -math.pi, math.pi, eef_orn[2])
-
-    # for gripper 
-    eef_init = 0
-    eef_rot_id = p.addUserDebugParameter("eef", -3.14, 3.14, eef_init)
     done_init = False
     while True:
-        eef_x = p.readUserDebugParameter(eef_x_id)
-        eef_y = p.readUserDebugParameter(eef_y_id)
-        eef_z = p.readUserDebugParameter(eef_z_id)
-        eef_roll  = p.readUserDebugParameter(eef_roll_id)
-        eef_pitch = p.readUserDebugParameter(eef_pitch_id)
-        eef_yaw   = p.readUserDebugParameter(eef_yaw_id)
-        # targetAngleGrasp = p.readUserDebugParameter(targetAngleGraspId)
-        # targetAngleTip = p.readUserDebugParameter(targetAngleTipId)
-        pos = [eef_x, eef_y, eef_z]
-        orn = [eef_roll, eef_pitch, eef_yaw]
-        # move_eff(pos, orn)
+
         if not done_init:
-            pos[2] = 0.5
-            move_eff(pos, [0,-np.pi,0])
+            eef_pos[2] = 0.5
+            move_eff(eef_pos, [0,-np.pi,0])
             done_init = True
         
-        eef_rot = p.readUserDebugParameter(eef_rot_id)
         numJoints = p.getNumJoints(kukaId)
         keys = p.getKeyboardEvents()
         ENTER = 65309
