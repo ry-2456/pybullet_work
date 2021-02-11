@@ -150,18 +150,12 @@ def get_block_pos(blockId, images):
     depth_buffer = np.reshape(images[3], [height, width])
     depth_image = near / (far - (far - near) * depth_buffer)
     seg_opengl = np.reshape(images[4], [height, width])
-    # flags = (images[4] == blockId)
-    flags = (seg_opengl == blockId)
-    
-    aveu, avev, count = 0, 0, 0
-    for i in range(height):
-        for j in range(width):
-            # if flags[i][j] == True:
-                object_uid = seg_opengl[i,j] & ((1 << 24) - 1)
-                if object_uid == blockId:
-                    aveu += j
-                    avev += i
-                    count += 1
+    mask = mask_from_seg(blockId, seg_opengl) 
+
+    # blockの画像中心を求める
+    count = np.count_nonzero(mask)
+    row_nonzero_idx, col_nonzero_idx = np.where(mask!=0)
+    avev, aveu = np.mean(row_nonzero_idx), np.mean(col_nonzero_idx)
 
     if count == 0:
         return None
