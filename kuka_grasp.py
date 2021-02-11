@@ -138,53 +138,51 @@ def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_b
     
     return posmap
 
+def longitudinal_direction(blockId, near, far, 
+        view_matrix, projection_matrix, height, width, depth_buffer):
+    """
+    block.urdfの長手方向を求める
+    return : [float]*3
+    """
+    posmap = get_posmap(near, 
+                        far, 
+                        view_matrix, 
+                        projection_matrix, 
+                        height, width, 
+                        depth_buffer)
+    pca = PCA(n_components=3)
+    # pca.fit(
+
 def get_block_pos(blockId, images):
     """
     block.urdfの中心座標を返す np.array([float]*3)
     """
     color_image_org = np.reshape(images[2], (height, width, 4))
-    color_image_ = color_image_org[:,:,[2,1,0]] # convet RGBA to BGR
-    # color_image = color_image.astype(np.uint8) # convert int32 to uint8.
-    color_image = np.zeros(color_image_.shape, np.uint8) # color_image_にcv2.circleで書き込むを原因不明の
-    copy_img(color_image, color_image_) # エラーが起きるこのように左のようにすればエラー回避できる
+    color_image_ = color_image_org[:,:,[2,1,0]]          # convet RGBA to BGR
+    color_image = np.zeros(color_image_.shape, np.uint8) # cv2.circleのエラー回避のため
+    copy_img(color_image, color_image_) 
     depth_buffer = np.reshape(images[3], [height, width])
-    depth_image = near / (far - (far - near) * depth_buffer)
     seg_opengl = np.reshape(images[4], [height, width])
     mask = mask_from_seg(blockId, seg_opengl) 
 
     # blockの画像中心を求める
     count = np.count_nonzero(mask)
+    if count == 0: return None
     row_nonzero_idx, col_nonzero_idx = np.where(mask!=0)
-    avev, aveu = np.mean(row_nonzero_idx), np.mean(col_nonzero_idx)
-
-    if count == 0:
-        return None
+    avev = np.mean(row_nonzero_idx, dtype=np.uint16)
+    aveu = np.mean(col_nonzero_idx, dtype=np.uint16)
 
     posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
-    print(posmap[int(avev/count), int(aveu/count)])
+    print(posmap[avev, aveu][:3])
     print(block_pos)
-  
-    vm = np.array(view_matrix).reshape(4,4)
-    aveu = aveu/count - width/2
-    avev = avev/count - height/2
-    theta_x = (np.deg2rad(fov)*aveu)/(2*height)
-    theta_y = (np.deg2rad(fov)*avev)/(2*height)
-    z = -depth_buffer[int(avev)][int(aveu)]
-    x = -z*np.tan(theta_x)
-    y = -z*np.tan(theta_y)
-    x_camera = np.array((x, y, z, 1))
-    x_world = np.dot(np.linalg.inv(vm.T), x_camera)
     
-    center = (int(aveu + width/2), int(avev + height/2))
-    cv2.circle(color_image, center, 3, (255, 255, 0), -1)
-    # cv2.circle(color_image, center, 3, (255, 255, 0), -1)
-    img = np.zeros(color_image.shape, np.uint8)
-    cv2.circle(img, (int(aveu + width/2), int(avev + height/2)), 3, (255, 255, 0), -1)
-    cv2.imshow("depth image", depth_image)
+    cv2.circle(color_image, (aveu,avev), 3, (255, 255, 0), -1)
     cv2.imshow("color image", color_image)
+    cv2.imshow("mask", mask)
     cv2.waitKey(10)
 
-    return x_world[:3]
+    block_center = posmap[avev, aveu][:3]
+    return block_center
 
 def grasp():
     leftfing1Id, leftfing2Id = 8, 10
