@@ -111,7 +111,7 @@ def copy_img(dst, src):
         for j in range(img_w):
             dst[i,j] = src[i,j]
 
-def mask_from_seg(obj_id, seg):
+def object_mask_from_seg(obj_id, seg):
     """
     segのobj_idのところを255,そうでないところを0
     にしたmaskを返す
@@ -164,7 +164,7 @@ def get_block_pos(blockId, images):
     depth_buffer = np.reshape(images[3], [height, width])
     seg_opengl = np.reshape(images[4], [height, width])
 
-    mask = mask_from_seg(blockId, seg_opengl) 
+    mask = object_mask_from_seg(blockId, seg_opengl) 
     posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
 
     # blockの画像中心を求める
