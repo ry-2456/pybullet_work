@@ -12,7 +12,7 @@
 # https://github.com/bulletphysics/bullet3/issues/1936
 # link_index == joint_index
 
-from datetime import datetime
+import cv2
 import pybullet as p
 import struct
 import pybullet_data
@@ -21,11 +21,21 @@ import math
 import sys
 import pprint
 
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from datetime import datetime
 from show_coords import show_coords
 
 physicsClient = p.connect(p.GUI) #or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0,0,-10.)
+
+# for camera
+width, height, fov = 240, 240, 60
+aspect = width / height
+near, far = 0.02, 4
+view_matrix = p.computeViewMatrix([-0.6, 0, 0.6], [-0.5, 0, 0], [1, 0, 0])
+projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
 
 # load block
 block_pos = [-0.5, 0, 0]
@@ -86,6 +96,94 @@ useSimulation = 1
 useRealTimeSimulation = 1
 ikSolver = 0
 p.setRealTimeSimulation(useRealTimeSimulation)
+
+def copy_img(dst, src):
+    """
+    p.getCameraImageで得た画像をcv2.circleに渡すとerrorが起きる
+
+    dst = np.array(src.shpae, src.dtype)
+    copy_img(dst, src)
+    cv2.circle(dst, ...)
+
+    としてdstをcv2.circleに渡すとerrorが起きなくなる
+    errorの原因は不明
+    """
+    img_h, img_w = src.shape[:2]
+    for i in range(img_h): 
+        for j in range(img_w):
+            dst[i,j] = src[i,j]
+
+def object_mask_from_seg(obj_id, seg):
+    """
+    segのobj_idのところを255,そうでないところを0
+    にしたmaskを返す
+    obj_id : body unique id 
+    seg : p.getCameraImage(...)の戻り値の4つめの値
+    """
+    mask = np.zeros(seg.shape, dtype=np.uint8)
+    mask[np.where(obj_id == seg&((1<<24)-1))] = 255
+    return mask
+
+def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer):
+    posmap = np.empty([height, width, 4])
+    projectionMatrix = np.asarray(projection_matrix).reshape([4,4],order='F')
+    viewMatrix = np.asarray(view_matrix).reshape([4,4],order='F')
+    tran_pix_world = np.linalg.inv(np.matmul(projectionMatrix, viewMatrix))
+    for h in range(height):
+        for w in range(width):
+            x = (2.*w - width)/width
+            y = -(2.*h - height)/height  # be careful！ deepth and its corresponding position
+            z = 2.*depth_buffer[h,w] - 1
+            pixPos = np.asarray([x, y, z, 1])
+            position = np.matmul(tran_pix_world, pixPos)
+            posmap[h,w,:] = position / position[3]
+    
+    return posmap[:,:,:3]
+
+def longitudinal_direction(block_posmap):
+    """
+    block.urdfの長手方向を求める
+    block_posmap : np.array(n x 3)
+    return : np.array([float]*3)
+    """
+    pca = PCA(n_components=3)
+    pca.fit(block_posmap)
+    v1, v2, v3 = pca.components_[:,[0,1,2]]
+
+    # print("################")
+    # print(pca.explained_variance_ratio_)
+    # print("################")
+
+    return v1
+
+def get_block_pos(blockId, images):
+    """
+    block.urdfの中心座標を返す np.array([float]*3)
+    """
+    color_image_org = np.reshape(images[2], (height, width, 4))
+    color_image_ = color_image_org[:,:,[2,1,0]]          # convet RGBA to BGR
+    color_image = np.zeros(color_image_.shape, np.uint8) # cv2.circleのエラー回避のため
+    copy_img(color_image, color_image_) 
+    depth_buffer = np.reshape(images[3], [height, width])
+    seg_opengl = np.reshape(images[4], [height, width])
+
+    mask = object_mask_from_seg(blockId, seg_opengl) 
+    posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
+
+    # blockの画像中心を求める
+    count = np.count_nonzero(mask)
+    if count == 0: return None
+    row_nonzero_idx, col_nonzero_idx = np.where(mask!=0)
+    avev = np.mean(row_nonzero_idx, dtype=np.uint16)
+    aveu = np.mean(col_nonzero_idx, dtype=np.uint16)
+
+    cv2.circle(color_image, (aveu,avev), 3, (255, 255, 0), -1)
+    cv2.imshow("color image", color_image)
+    cv2.imshow("mask", mask)
+    cv2.waitKey(10)
+
+    block_center = posmap[avev, aveu]
+    return block_center
 
 def grasp():
     leftfing1Id, leftfing2Id = 8, 10
@@ -246,3 +344,31 @@ if __name__ == "__main__":
         mouse_events = p.getMouseEvents()
         if mouse_events:
             print(mouse_events)
+
+        images = p.getCameraImage(width,
+                                  height,
+                                  view_matrix,
+                                  projection_matrix,
+                                  # shadow=True,
+                                  renderer=p.ER_BULLET_HARDWARE_OPENGL)
+        
+        b_pos = get_block_pos(blockId, images)
+        print(b_pos)
+        print(block_pos)
+    
+        if b_pos is None: continue
+        # blockの長手方向を描画
+        depth_buffer = images[3].reshape(height, width)
+        seg = images[4].reshape(height, width)
+        block_mask = object_mask_from_seg(blockId, seg)
+        posmap = get_posmap(near, far, 
+                            view_matrix, projection_matrix, 
+                            height, width, depth_buffer)
+        block_posmap = posmap[block_mask!=0]
+        plt.scatter(block_posmap[:,0].reshape(-1), block_posmap[:,1],s=10)
+        plt.xlim(-2,2)
+        plt.ylim(-2,2)
+        plt.grid()
+        plt.show()
+        v = longitudinal_direction(block_posmap)
+        p.addUserDebugLine(b_pos+v/10, b_pos-v/10, [1, 0, 0])
