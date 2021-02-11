@@ -21,6 +21,8 @@ import math
 import sys
 import pprint
 
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 from datetime import datetime
 from show_coords import show_coords
 
@@ -138,20 +140,21 @@ def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_b
     
     return posmap[:,:,:3]
 
-def longitudinal_direction(blockId, near, far, 
-        view_matrix, projection_matrix, height, width, depth_buffer):
+def longitudinal_direction(block_posmap):
     """
     block.urdfの長手方向を求める
-    return : [float]*3
+    block_posmap : np.array(n x 3)
+    return : np.array([float]*3)
     """
-    posmap = get_posmap(near, 
-                        far, 
-                        view_matrix, 
-                        projection_matrix, 
-                        height, width, 
-                        depth_buffer)
     pca = PCA(n_components=3)
-    # pca.fit(
+    pca.fit(block_posmap)
+    v1, v2, v3 = pca.components_[:,[0,1,2]]
+
+    # print("################")
+    # print(pca.explained_variance_ratio_)
+    # print("################")
+
+    return v1
 
 def get_block_pos(blockId, images):
     """
@@ -352,3 +355,20 @@ if __name__ == "__main__":
         b_pos = get_block_pos(blockId, images)
         print(b_pos)
         print(block_pos)
+    
+        if b_pos is None: continue
+        # blockの長手方向を描画
+        depth_buffer = images[3].reshape(height, width)
+        seg = images[4].reshape(height, width)
+        block_mask = object_mask_from_seg(blockId, seg)
+        posmap = get_posmap(near, far, 
+                            view_matrix, projection_matrix, 
+                            height, width, depth_buffer)
+        block_posmap = posmap[block_mask!=0]
+        plt.scatter(block_posmap[:,0].reshape(-1), block_posmap[:,1],s=10)
+        plt.xlim(-2,2)
+        plt.ylim(-2,2)
+        plt.grid()
+        plt.show()
+        v = longitudinal_direction(block_posmap)
+        p.addUserDebugLine(b_pos+v/10, b_pos-v/10, [1, 0, 0])
