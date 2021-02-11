@@ -163,7 +163,9 @@ def get_block_pos(blockId, images):
     copy_img(color_image, color_image_) 
     depth_buffer = np.reshape(images[3], [height, width])
     seg_opengl = np.reshape(images[4], [height, width])
+
     mask = mask_from_seg(blockId, seg_opengl) 
+    posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
 
     # blockの画像中心を求める
     count = np.count_nonzero(mask)
@@ -172,10 +174,6 @@ def get_block_pos(blockId, images):
     avev = np.mean(row_nonzero_idx, dtype=np.uint16)
     aveu = np.mean(col_nonzero_idx, dtype=np.uint16)
 
-    posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
-    print(posmap[avev, aveu])
-    print(block_pos)
-    
     cv2.circle(color_image, (aveu,avev), 3, (255, 255, 0), -1)
     cv2.imshow("color image", color_image)
     cv2.imshow("mask", mask)
@@ -352,8 +350,5 @@ if __name__ == "__main__":
                                   renderer=p.ER_BULLET_HARDWARE_OPENGL)
         
         b_pos = get_block_pos(blockId, images)
-        print(b_pos.shape)
-        # print("##########")
-        # print(b_pos)
-        # print(block_pos)
-        # print("##########")
+        print(b_pos)
+        print(block_pos)
