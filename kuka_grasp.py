@@ -136,7 +136,7 @@ def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_b
             position = np.matmul(tran_pix_world, pixPos)
             posmap[h,w,:] = position / position[3]
     
-    return posmap
+    return posmap[:,:,:3]
 
 def longitudinal_direction(blockId, near, far, 
         view_matrix, projection_matrix, height, width, depth_buffer):
@@ -173,7 +173,7 @@ def get_block_pos(blockId, images):
     aveu = np.mean(col_nonzero_idx, dtype=np.uint16)
 
     posmap = get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer)
-    print(posmap[avev, aveu][:3])
+    print(posmap[avev, aveu])
     print(block_pos)
     
     cv2.circle(color_image, (aveu,avev), 3, (255, 255, 0), -1)
@@ -181,7 +181,7 @@ def get_block_pos(blockId, images):
     cv2.imshow("mask", mask)
     cv2.waitKey(10)
 
-    block_center = posmap[avev, aveu][:3]
+    block_center = posmap[avev, aveu]
     return block_center
 
 def grasp():
