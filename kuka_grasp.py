@@ -111,6 +111,17 @@ def copy_img(dst, src):
         for j in range(img_w):
             dst[i,j] = src[i,j]
 
+def mask_from_seg(obj_id, seg):
+    """
+    segのobj_idのところを255,そうでないところを0
+    にしたmaskを返す
+    obj_id : body unique id 
+    seg : p.getCameraImage(...)の戻り値の4つめの値
+    """
+    mask = np.zeros(seg.shape, dtype=np.uint8)
+    mask[np.where(obj_id == seg&((1<<24)-1))] = 255
+    return mask
+
 def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer):
     posmap = np.empty([height, width, 4])
     projectionMatrix = np.asarray(projection_matrix).reshape([4,4],order='F')
