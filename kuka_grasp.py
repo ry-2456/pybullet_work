@@ -59,11 +59,14 @@ block_orn = p.getQuaternionFromEuler([0,0,0])
 #     blockId = p.loadURDF("block.urdf", block_pos)
 #     block_ids.append(blockId)
 block_0_pos = [-0.5, 0.15, 0]
-block_1_pos = [-0.5, -0.15, 0]
+block_1_pos = [-0.5, 0.25, 0]
+block_2_pos = [-0.6, 0.25, 0]
 blockId0 = p.loadURDF("block.urdf", block_0_pos)
-blockId1 = p.loadURDF("block.urdf", block_1_pos, p.getQuaternionFromEuler([0,0,np.pi/2]))
+blockId1 = p.loadURDF("block.urdf", block_1_pos, p.getQuaternionFromEuler([0,0,np.pi/6]))
+blockId2 = p.loadURDF("block.urdf", block_2_pos, p.getQuaternionFromEuler([0,0,-np.pi/4]))
 block_ids.append(blockId0)
 block_ids.append(blockId1)
+block_ids.append(blockId2)
 
 # p.resetBasePositionAndOrientation(blockId, block_pos, block_orn)
 # block_pos[2] = 0.5
