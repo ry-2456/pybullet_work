@@ -360,6 +360,7 @@ def move_eff(target_pos, target_orn):
                                 controlMode=p.POSITION_CONTROL,
                                 targetPosition=jointPoses[i-skiped_num],
                                 targetVelocity=0,
+                                maxVelocity=1,
                                 force=500,
                                 positionGain=0.03,
                                 velocityGain=1)
