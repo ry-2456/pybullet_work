@@ -376,13 +376,7 @@ if __name__ == "__main__":
     eef_pos = np.array(eef_pos)
     eef_orn = np.array(eef_orn)
 
-    done_init = False
     while True:
-
-        if not done_init:
-            eef_pos[2] = 0.5
-            move_eff(eef_pos, [0,-np.pi,0])
-            done_init = True
         
         numJoints = p.getNumJoints(kukaId)
         keys = p.getKeyboardEvents()
@@ -432,13 +426,16 @@ if __name__ == "__main__":
         block_posmap = posmap[block_mask!=0]
         v = longitudinal_direction(block_posmap)
 
+        # blockの長手方向を描画
+        p.addUserDebugLine(b_pos+v/10, b_pos-v/10, [1, 0, 0])
+
         # world -> eefの同時変換行列を計算
         eef_base_pos, eef_base_orn = p.getLinkState(kukaId, kukaEndEffectorIndex)[4:6]
         world_to_eef_base = np.eye(4)
         world_to_eef_base[0:3,0:3] = np.array(p.getMatrixFromQuaternion(eef_base_orn)).reshape(3,3)
         world_to_eef_base[:3,3] = eef_base_pos
 
-        # yawの回転角の計算, eefのy軸が方向にブロックの長手方向が向いていればいい
+        # yawの回転角の計算, eefのy軸方向にブロックの長手方向が一致すればいい
         v_in_eef = np.linalg.inv(world_to_eef_base).dot(np.hstack([v,1]))[:3] - np.linalg.inv(world_to_eef_base).dot(np.array([0,0,0,1]))[:3]
         v_in_eef = v_in_eef / np.linalg.norm(v_in_eef)
         e_y = np.array([0,1.,0])
@@ -449,20 +446,34 @@ if __name__ == "__main__":
         eef_orn = [0, -np.pi, yaw_now] # eefが下向き
         if v_in_eef[0] < 0: eef_orn[2] -= yaw_rot_diff
         else:               eef_orn[2] += yaw_rot_diff
-        # TODO : eef_orn[2]を範囲に収める処理を追加
+        # TODO : eef_orn[2]をjoint_limitに収める処理を追加?
+
+        # blockを掴んでtrayに入れる
+        eef_reset_pos = [-0.5,0,0.5]
+        eef_tray_pos = tray_pos
+        eef_tray_pos[2] = 0.5
+        eef_tray_orn = [0,np.pi,0]
 
         release()
-        time.sleep(0.1)
-        move_eff([-0.5,0,0.5], eef_orn)
+        time.sleep(1)
+        # blockの真上にeefを移動
+        move_eff(eef_reset_pos, eef_orn)
         time.sleep(2)
-        b_pos[2] = -0.005+0.1
+        b_pos[2] = -0.005+0.01
         move_eff(b_pos, eef_orn)
         time.sleep(2)
+        # eefの中にblockが来る位置に移動
         b_pos[2] = -0.005
         move_eff(b_pos, eef_orn)
         time.sleep(2)
+        # blockを掴む
         grasp()
-        time.sleep(0.1)
-    
-        # # blockの長手方向を描画
-        p.addUserDebugLine(b_pos+v/10, b_pos-v/10, [1, 0, 0])
+        time.sleep(1)
+        # trayの位置に移動
+        move_eff(eef_tray_pos, eef_tray_orn)
+        time.sleep(4)
+        # blockをtrayの上で話す
+        release()
+        time.sleep(2)
+        move_eff(eef_reset_pos, eef_orn)
+
