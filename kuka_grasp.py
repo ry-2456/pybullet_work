@@ -70,6 +70,9 @@ block_ids.append(blockId2)
 
 # p.resetBasePositionAndOrientation(blockId, block_pos, block_orn)
 # block_pos[2] = 0.5
+# tray_pos = [0.6,0,0.]
+tray_pos = [-0.6,-0.4,0]
+trayId = p.loadURDF("tray/tray.urdf", tray_pos)
 
 # load plane
 planeId = p.loadURDF("plane.urdf", useMaximalCoordinates=False)
