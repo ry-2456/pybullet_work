@@ -40,6 +40,12 @@ width, height, fov = 240, 240, 60
 aspect = width / height
 near, far = 0.02, 4
 view_matrix = p.computeViewMatrix([-0.6, 0, 0.6], [-0.5, 0, 0], [1, 0, 0])
+view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0,0,0],
+                                                  distance=2.42,
+                                                  yaw=-128,
+                                                  pitch=-39.80,
+                                                  roll=0,
+                                                  upAxisIndex=2,)
 projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
 
 # load block
