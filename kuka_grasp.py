@@ -417,8 +417,8 @@ if __name__ == "__main__":
         print(b_pos)
 
         # ブロックの長手方向の計算
-        depth_buffer = images[3].reshape(height, width)
-        seg = images[4].reshape(height, width)
+        depth_buffer = np.reshape(images[3], (height, width))
+        seg = np.reshape(images[4], (height, width))
         block_mask = object_mask_from_seg(object_uid, seg)
         posmap = get_posmap(near, far, 
                             view_matrix, projection_matrix, 
