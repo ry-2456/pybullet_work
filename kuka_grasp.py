@@ -237,7 +237,7 @@ def release():
                                 positionGains=[0.03]*4,
                                 velocityGains=[1]*4)
 
-def move_eff(target_pos, target_orn):
+def move_eef(target_pos, target_orn):
     # kukaEndEffectorIndexからleftfing2Id(左の手先)までのz軸方の距離を求める
     # TODO:
     # 同時変換行列で計算しましょう
@@ -399,23 +399,23 @@ if __name__ == "__main__":
         release()
         time.sleep(1)
         # blockの真上にeefを移動
-        move_eff(eef_reset_pos, eef_orn)
+        move_eef(eef_reset_pos, eef_orn)
         time.sleep(2)
         b_pos[2] = -0.005+0.01
-        move_eff(b_pos, eef_orn)
+        move_eef(b_pos, eef_orn)
         time.sleep(2)
         # eefの中にblockが来る位置に移動
         b_pos[2] = -0.005
-        move_eff(b_pos, eef_orn)
+        move_eef(b_pos, eef_orn)
         time.sleep(2)
         # blockを掴む
         grasp()
         time.sleep(1)
         # trayの位置に移動
-        move_eff(eef_tray_pos, eef_tray_orn)
+        move_eef(eef_tray_pos, eef_tray_orn)
         time.sleep(4)
         # blockをtrayの上で話す
         release()
         time.sleep(2)
-        move_eff(eef_reset_pos, eef_orn)
+        move_eef(eef_reset_pos, eef_orn)
 
