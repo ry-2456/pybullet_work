@@ -345,7 +345,7 @@ if __name__ == "__main__":
             if ((e[0] == 2) and (e[3] == 0) and (e[4] & p.KEY_WAS_TRIGGERED)): # 左クリック判定
                 mouse_x = e[1]
                 mouse_y = e[2]
-                object_uid = clicked_object_uid(mouse_x, mouse_y) # -1 for no object was clicked 
+                object_uid = get_object_uid(mouse_x, mouse_y) # -1 for no object was clicked 
         
         # print(object_uid)
         if object_uid < 0: continue # no object was clicked 

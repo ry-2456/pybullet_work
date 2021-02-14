@@ -33,7 +33,7 @@ def getRayFromTo(mouseX, mouseY):
     ]
     return rayFrom, rayTo
 
-def clicked_object_uid(mouse_x, mouse_y):
+def get_object_uid(mouse_x, mouse_y):
     rayFrom, rayTo = getRayFromTo(mouse_x, mouse_y)
     rayInfo = p.rayTest(rayFrom, rayTo)
     hit = rayInfo[0]
