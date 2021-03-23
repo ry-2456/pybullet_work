@@ -66,3 +66,44 @@ def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_b
             posmap[h,w,:] = position / position[3]
     
     return posmap[:,:,:3]
+
+def show_coords(parentObjectUniqueId, parentLinkIndex=-1, frameLength=0.3, lineWidth=3.0):
+    """
+    座標を書き入れる
+
+    Parameters
+    ----------
+    parentObjectUniqueId : int
+        座標を書き入れるbody unique id
+
+    parentLinkIndex : int
+        デフォルト値-1はbase linkを指す
+
+    frameLength : float
+        フレームの棒の長さ 
+
+    lienWidth : float
+        フレームの棒の幅
+    """
+    # draw x axis of frame
+    p.addUserDebugLine(lineFromXYZ=[0, 0, 0],
+                       lineToXYZ=[frameLength, 0, 0],      
+                       lineColorRGB=[1, 0, 0], 
+                       lineWidth=lineWidth,
+                       parentObjectUniqueId=parentObjectUniqueId, 
+                       parentLinkIndex=parentLinkIndex)
+    # draw y axis of frame
+    p.addUserDebugLine(lineFromXYZ=[0, 0, 0],
+                       lineToXYZ=[0, frameLength, 0],      
+                       lineColorRGB=[0, 1, 0], 
+                       lineWidth=lineWidth,
+                       parentObjectUniqueId=parentObjectUniqueId, 
+                       parentLinkIndex=parentLinkIndex)
+
+    # drwa z axis of frame
+    p.addUserDebugLine(lineFromXYZ=[0, 0, 0],
+                       lineToXYZ=[0, 0, frameLength],      
+                       lineColorRGB=[0, 0, 1], 
+                       lineWidth=lineWidth,
+                       parentObjectUniqueId=parentObjectUniqueId, 
+                       parentLinkIndex=parentLinkIndex)

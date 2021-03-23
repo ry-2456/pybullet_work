@@ -29,7 +29,6 @@ import pprint
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from datetime import datetime
-from show_coords import show_coords
 from a_pybullet_utils import *
 
 physicsClient = p.connect(p.GUI) #or p.DIRECT for non-graphical version
