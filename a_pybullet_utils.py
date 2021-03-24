@@ -34,24 +34,42 @@ def getRayFromTo(mouseX, mouseY):
     return rayFrom, rayTo
 
 def get_object_uid(x, y):
+    """(x,y)にあるオブジェクトのuidを返す
+    """
     rayFrom, rayTo = getRayFromTo(x, y)
     rayInfo = p.rayTest(rayFrom, rayTo)
     hit = rayInfo[0]
     object_uid = hit[0]
     return object_uid
 
-def object_mask_from_seg(obj_id, seg):
-    """
-    segのobj_idのところを255,そうでないところを0
-    にしたmaskを返す
-    obj_id : body unique id 
-    seg : p.getCameraImage(...)の戻り値の4つめの値
+def object_mask_from_seg(obj_uid, seg):
+    """uidがobj_idであるマスク画像返す関数
+
+    Args:
+        obj_uid (int): オブジェクトのuid
+        seg (np.array): p.getCameraImage(...)の戻り値の4つめの値
+
+    Returns:
+        mask (np.arary): uidがobj_idであるオブジェクトのマスク画像(mask.shape==seg.shape)
     """
     mask = np.zeros(seg.shape, dtype=np.uint8)
-    mask[obj_id == seg&((1<<24)-1)] = 255
+    mask[obj_uid == seg&((1<<24)-1)] = 255
     return mask
 
 def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_buffer):
+    """ポジションマップを返す関数
+    Args:
+        near (float): 視錘台のnear clipping plane 
+        far (float): 視錘台のfar clipping plane
+        view_matrix ([float]*16): p.computeViewMatrix(FromYawPitchRoll)の戻り値
+        projection_matrix ([float]*16): p.computeProjectionMatrix(FOV)の戻り値
+        height (int): 画像の高さ
+        width (int): 画像の幅
+        depth_buffer ():
+
+    Returns:
+        pos_map (np.array): height x width x 3
+    """
     posmap = np.empty([height, width, 4])
     projectionMatrix = np.asarray(projection_matrix).reshape([4,4],order='F')
     viewMatrix = np.asarray(view_matrix).reshape([4,4],order='F')
@@ -64,26 +82,16 @@ def get_posmap(near, far, view_matrix, projection_matrix, height, width, depth_b
             pixPos = np.asarray([x, y, z, 1])
             position = np.matmul(tran_pix_world, pixPos)
             posmap[h,w,:] = position / position[3]
-    
     return posmap[:,:,:3]
 
 def show_coords(parentObjectUniqueId, parentLinkIndex=-1, frameLength=0.3, lineWidth=3.0):
-    """
-    座標を書き入れる
+    """リンクの座標系を書き入れる
 
-    Parameters
-    ----------
-    parentObjectUniqueId : int
-        座標を書き入れるbody unique id
-
-    parentLinkIndex : int
-        デフォルト値-1はbase linkを指す
-
-    frameLength : float
-        フレームの棒の長さ 
-
-    lienWidth : float
-        フレームの棒の幅
+    Args:
+        parentObjectUniqueId (int): 座標を書き入れるオブジェクトのuid
+        parentLinkIndex (int, optional): 座標系を書き入れるリンクのインデックス(デフォはベースリンク)
+        frameLength (float, optional): フレームの棒の長さ 
+        lienWidth (float, optional): フレームの棒の幅
     """
     # draw x axis of frame
     p.addUserDebugLine(lineFromXYZ=[0, 0, 0],
