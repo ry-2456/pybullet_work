@@ -39,7 +39,6 @@ p.setGravity(0,0,-10.)
 width, height, fov = 240, 240, 60
 aspect = width / height
 near, far = 0.02, 4
-view_matrix = p.computeViewMatrix([-0.6, 0, 0.6], [-0.5, 0, 0], [1, 0, 0])
 view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0,0,0],
                                                   distance=2.42,
                                                   yaw=-128,
@@ -48,16 +47,8 @@ view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0,0,0],
                                                   upAxisIndex=2,)
 projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
 
-# load block
+# load blocks
 block_ids = []
-block_pos = [-0.5, 0, 0]
-block_orn = p.getQuaternionFromEuler([0,0,0])
-# block_pos = [1., 0, 0.5]
-# for i in range(4):
-#     # blockId = p.loadURDF("block.urdf", block_pos, block_orn)
-#     block_pos[0] -= i*0.1
-#     blockId = p.loadURDF("block.urdf", block_pos)
-#     block_ids.append(blockId)
 block_0_pos = [-0.5, 0.15, 0]
 block_1_pos = [-0.5, 0.25, 0]
 block_2_pos = [-0.6, 0.25, 0]
@@ -68,9 +59,7 @@ block_ids.append(blockId0)
 block_ids.append(blockId1)
 block_ids.append(blockId2)
 
-# p.resetBasePositionAndOrientation(blockId, block_pos, block_orn)
-# block_pos[2] = 0.5
-# tray_pos = [0.6,0,0.]
+# load tray
 tray_pos = [-0.6,-0.4,0]
 trayId = p.loadURDF("tray/tray.urdf", tray_pos)
 
@@ -83,7 +72,6 @@ kukaEndEffectorIndex = 6
 kukaGripperIndex = 7
 leftfing1Id, leftfing2Id = 8, 10
 rightfing1Id, rightfing2Id = 11, 13
-# p.resetBasePositionAndOrientation(kukaId, [0,0,0], [0,0,0,1])
 
 for b_id in block_ids:
     p.changeDynamics(b_id, -1, lateralFriction=3, frictionAnchor=1)
@@ -100,7 +88,7 @@ for i in range(p.getNumJoints(kukaId)):
                         parentObjectUniqueId=kukaId,
                         parentLinkIndex=i)
     # pprint.pprint(p.getJointInfo(kukaId, i)[3])
-    print(p.getJointInfo(kukaId, i)[3])
+    # print(p.getJointInfo(kukaId, i)[3])
 
 for b_id in block_ids:
     show_coords(b_id, frameLength=0.05)
@@ -118,17 +106,8 @@ jd = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 for i in range(len(rp)):
     p.resetJointState(kukaId, i, rp[i])
 
-t = 0.
-useNullSpace = 1
-
-useOrientation = 1
-#If we set useSimulation=0, it sets the arm pose to be the IK result directly without using dynamic control.
-#This can be used to test the IK result accuracy.
-useSimulation = 1
 useRealTimeSimulation = 1
-ikSolver = 0
 p.setRealTimeSimulation(useRealTimeSimulation)
-
 
 
 def copy_img(dst, src):
@@ -156,10 +135,6 @@ def longitudinal_direction(block_posmap):
     pca = PCA(n_components=3)
     pca.fit(block_posmap)
     v1, v2, v3 = pca.components_[:,[0,1,2]]
-
-    # print("################")
-    # print(pca.explained_variance_ratio_)
-    # print("################")
 
     return v1
 
@@ -256,19 +231,6 @@ def move_eef(target_pos, target_orn):
     target_pos[2] -= z_offset-0.063 # TODO: もう少し調整が必要0.056
                                     #       角度がついた時も考える
 
-    # eef_base_to_tip = np.eye(4)
-    # eef_base_to_tip[:3,3] = [x_offset, y_offset, z_offset]
-    # world_to_eef_base = np.eye(4)
-    # world_to_eef_base[0:3,0:3] = np.array(p.getMatrixFromQuaternion(eef_base_orn)).reshape(3,3)
-    # world_to_eef_base[:3,3] = eef_base_pos
-
-    # x_diff = endEffector_pos[4][0] - leftTip_pos[4][0]
-    # y_diff = endEffector_pos[4][1] - leftTip_pos[4][1]
-    # z_diff = endEffector_pos[4][2] - leftTip_pos[4][2]
-    # orn = p.getQuaternionFromEuler([0, -math.pi, math.pi/2.])
-    # pos = block_pos[:2] + [0] # zは0
-    # pos[2] += z_diff+0.080 # 手先
-    
     # yaw->pitch->rollの順番で回転
     if len(target_orn) == 3:
         target_orn= p.getQuaternionFromEuler(target_orn)
@@ -307,10 +269,6 @@ def move_eef(target_pos, target_orn):
                                 velocityGain=1)
 
 if __name__ == "__main__":
-    # is_grasping = True
-    # grasp()
-    is_grasping = False
-    release()
 
     eef_pos, eef_orn = p.getLinkState(kukaId, kukaEndEffectorIndex)[4:6]
     eef_orn = p.getEulerFromQuaternion(eef_orn)
@@ -318,18 +276,6 @@ if __name__ == "__main__":
     eef_orn = np.array(eef_orn)
 
     while True:
-        
-        numJoints = p.getNumJoints(kukaId)
-        keys = p.getKeyboardEvents()
-        ENTER = 65309
-        if ENTER in keys and keys[ENTER]&p.KEY_WAS_RELEASED:
-            if is_grasping:
-                release()
-                is_grasping = False
-            else:
-                grasp()
-                is_grasping = True
-
         images = p.getCameraImage(width,
                                   height,
                                   view_matrix,
@@ -381,8 +327,6 @@ if __name__ == "__main__":
         v_in_eef = v_in_eef / np.linalg.norm(v_in_eef)
         e_y = np.array([0,1.,0])
         yaw_rot_diff = np.arccos(np.dot(v_in_eef, e_y))
-        # print(yaw_rot_diff)
-        # print(np.rad2deg(yaw_rot_diff))
         yaw_now = p.getEulerFromQuaternion(eef_base_orn)[2]
         eef_orn = [0, -np.pi, yaw_now] # eefが下向き
         if v_in_eef[0] < 0: eef_orn[2] -= yaw_rot_diff
