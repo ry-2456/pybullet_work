@@ -1,10 +1,6 @@
 import pybullet as p
-import cv2
-import time
-import pybullet_data
 import numpy as np
 import math
-import sys
 
 def getRayFromTo(mouseX, mouseY):
     width, height, viewMat, projMat, cameraUp, camForward, horizon, vertical, _, _, dist, camTarget = p.getDebugVisualizerCamera()
